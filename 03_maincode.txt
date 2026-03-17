@@ -1,0 +1,71 @@
+org $DFF010
+//chọn bất cứ chỗ trống nào trong ROM đều được.
+//You can choose any freespace in the ROM.
+//空きアドレスであればロム内どこでもOK。
+
+//##########KUCHI PAKU 1############
+define	pad1				$0118
+define	kuchi1			$0222
+define	kuchi2			$0226
+define	oam_mode	$52
+define	timer 			$01F0
+define	save_x			$01F1
+define	kuchi_flag		$01F2
+
+kuchipaku_menu1:
+	REP #$30
+	LDA $52
+	STA $65
+	CMP #$0064
+	BEQ +
+	CMP #$0054
+	BEQ +
+-
+	JML $80A4A1
++
+	JSR write_kuchipaku
+	BRA -
+	
+write_kuchipaku:
+	PHP
+	SEP #$30
+	LDA {kuchi_flag}
+	CMP #$FF
+	BEQ +
+	LDA {pad1}		//check joypad input: select button
+	CMP #$20		
+	BNE +
+	LDA kuchi_delay
+	STA {timer}
+	LDA #$01
+	STA {save_x}
+	LDA #$FF
+	STA {kuchi_flag}
++
+	LDX {save_x}
+	LDA kuchipaku_jun,x
+	STA {kuchi1}
+	DEC #2
+	STA {kuchi2}
+	LDA {timer}
+	BEQ end_kuchipaku
+	DEC {timer}
+	BNE end_kuchipaku
+	LDA kuchi_delay
+	STA {timer}
+	LDX {save_x}
+	INX
+	STX {save_x}
+	CPX #$05
+	BCC end_kuchipaku
+	STZ {save_x}
+	STZ {kuchi_flag}
+	STZ {timer}
+end_kuchipaku:
+	PLP
+	RTS
+	
+kuchipaku_jun:
+	db $08, $0E, $2E, $0E, $08
+kuchi_delay:
+	db $04

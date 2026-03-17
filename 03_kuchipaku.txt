@@ -1,0 +1,2 @@
+org $80A49B
+	JML kuchipaku_menu1

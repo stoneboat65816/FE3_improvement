@@ -1,0 +1,4 @@
+arch snes.cpu
+lorom
+	incsrc "03_kuchipaku.txt"
+	incsrc "03_maincode.txt"
