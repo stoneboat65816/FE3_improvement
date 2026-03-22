@@ -11,8 +11,9 @@ define	oam_mode	$52
 define	timer 			$01F0
 define	save_x			$01F1
 define	kuchi_flag		$01F2
+define	save_a			$01F3
 
-kuchipaku_menu1:
+kuchipaku_menu:
 	REP #$30
 	LDA $52
 	STA $65
@@ -29,6 +30,30 @@ kuchipaku_menu1:
 write_kuchipaku:
 	PHP
 	SEP #$30
+	LDA $7F4417
+	CMP #$91
+	BEQ +
+	JSR charakuchi
+	BRA end_kuchi
++
+	JSR mediuskuchi
+end_kuchi:
+	PLP
+	RTS
+	
+kuchipaku_jun:
+	db $08, $0E, $2E, $0E, $08
+medius_kuchi_jun1:
+	db $08, $06, $22, $20
+medius_kuchi_jun2:
+	db $2E, $2C, $0E, $0C
+	
+kuchi_delay:
+	db $04 
+medius_kuchidelay:
+	db $08
+	
+charakuchi:
 	LDA {kuchi_flag}
 	CMP #$FF
 	BEQ +
@@ -48,24 +73,85 @@ write_kuchipaku:
 	DEC #2
 	STA {kuchi2}
 	LDA {timer}
-	BEQ end_kuchipaku
+	BEQ end_charakuchi
 	DEC {timer}
-	BNE end_kuchipaku
+	BNE end_charakuchi
 	LDA kuchi_delay
 	STA {timer}
 	LDX {save_x}
 	INX
 	STX {save_x}
 	CPX #$05
-	BCC end_kuchipaku
+	BCC end_charakuchi
 	STZ {save_x}
 	STZ {kuchi_flag}
 	STZ {timer}
-end_kuchipaku:
-	PLP
+end_charakuchi:
 	RTS
 	
-kuchipaku_jun:
-	db $08, $0E, $2E, $0E, $08
-kuchi_delay:
-	db $04
+mediuskuchi:
+	LDA {kuchi_flag}
+	CMP #$FF
+	BEQ +
+	LDA {pad1}		//check joypad input: select button
+	CMP #$20		
+	BNE +
+	LDA medius_kuchidelay
+	STA {timer}
+	LDA #$05
+	STA {save_x}
+	LDA #$FF
+	STA {kuchi_flag}
++
+	LDA {save_x}
+	AND #$01
+	ASL
+	TAX
+	JSR (write_mediuskuchi,x)
+	LDA {timer}
+	BEQ end_mediuskuchi
+	DEC {timer}
+	BNE end_mediuskuchi
+	LDA medius_kuchidelay
+	STA {timer}
+	DEC {save_x}
+	BNE end_mediuskuchi
+	STZ {save_x}
+	STZ {kuchi_flag}
+	STZ {timer}
+end_mediuskuchi:
+	RTS
+	
+write_mediuskuchi:
+	dw mediuskuchi0
+	dw mediuskuchi1
+mediuskuchi0:
+	LDX #$00
+	LDA medius_kuchi_jun1,x
+	STA $0222,x
+	LDA medius_kuchi_jun1+1,x
+	STA $0226,x
+	LDA medius_kuchi_jun1+2,x
+	STA $022E,x
+	LDA medius_kuchi_jun1+3,x
+	STA $0232,x
+	RTS
+mediuskuchi1:
+	LDX #$00
+	LDA medius_kuchi_jun2,x
+	STA $0222,x
+	LDA medius_kuchi_jun2+1,x
+	STA $0226,x
+	LDA medius_kuchi_jun2+2,x
+	STA $022E,x
+	LDA medius_kuchi_jun2+3,x
+	STA $0232,x
+	RTS
+	
+quit_kuchipaku:
+	SEP #$20
+	STZ {save_x}
+	STZ {kuchi_flag}
+	STZ {timer}
+	LDA #$02
+	JML $81C3C6

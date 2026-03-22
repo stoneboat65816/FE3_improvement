@@ -1,2 +1,4 @@
 org $80A49B
-	JML kuchipaku_menu1
+	JML kuchipaku_menu
+org $81C3C2
+	JML quit_kuchipaku
